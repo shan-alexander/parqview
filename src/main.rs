@@ -18,11 +18,37 @@ use std::path::PathBuf;
 
 use eframe::egui;
 
+fn is_wayland_available() -> bool {
+    if std::env::var_os("WAYLAND_DISPLAY").is_none() {
+        return false;
+    }
+    #[cfg(target_os = "linux")]
+    unsafe {
+        if let Ok(name1) = std::ffi::CString::new("libwayland-client.so.0") {
+            let handle1 = libc::dlopen(name1.as_ptr(), libc::RTLD_LAZY);
+            if !handle1.is_null() {
+                libc::dlclose(handle1);
+                return true;
+            }
+        }
+        if let Ok(name2) = std::ffi::CString::new("libwayland-client.so") {
+            let handle2 = libc::dlopen(name2.as_ptr(), libc::RTLD_LAZY);
+            if !handle2.is_null() {
+                libc::dlclose(handle2);
+                return true;
+            }
+        }
+        false
+    }
+    #[cfg(not(target_os = "linux"))]
+    true
+}
+
 fn main() -> eframe::Result<()> {
     let initial = std::env::args().nth(1).map(PathBuf::from);
 
-    // If WINIT_UNIX_BACKEND is not set and WAYLAND_DISPLAY is missing, default to X11.
-    if std::env::var("WINIT_UNIX_BACKEND").is_err() && std::env::var("WAYLAND_DISPLAY").is_err() {
+    // If WINIT_UNIX_BACKEND is not set, check if Wayland library & display are available.
+    if std::env::var_os("WINIT_UNIX_BACKEND").is_none() && !is_wayland_available() {
         std::env::set_var("WINIT_UNIX_BACKEND", "x11");
     }
 
@@ -36,24 +62,9 @@ fn main() -> eframe::Result<()> {
         ..Default::default()
     };
 
-    let initial_clone = initial.clone();
-    let res = eframe::run_native(
+    eframe::run_native(
         "parqview",
-        options.clone(),
-        Box::new(move |cc| Ok(Box::new(app::ParqApp::new(cc, initial_clone)))),
-    );
-
-    if let Err(ref e) = res {
-        if std::env::var("WINIT_UNIX_BACKEND").is_err() {
-            eprintln!("Wayland initialization failed ({e}). Falling back to X11 backend...");
-            std::env::set_var("WINIT_UNIX_BACKEND", "x11");
-            return eframe::run_native(
-                "parqview",
-                options,
-                Box::new(move |cc| Ok(Box::new(app::ParqApp::new(cc, initial)))),
-            );
-        }
-    }
-
-    res
+        options,
+        Box::new(move |cc| Ok(Box::new(app::ParqApp::new(cc, initial)))),
+    )
 }

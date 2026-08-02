@@ -41,26 +41,26 @@ fn dark_visuals() -> Visuals {
     v.window_fill = BG_PANEL;
     v.panel_fill = BG;
     v.selection.bg_fill = BG_SELECTED;
-    v.selection.stroke = Stroke::new(1.0, ACCENT_DIM);
+    v.selection.stroke = Stroke::new(1.0_f32, ACCENT_DIM);
     v.widgets.noninteractive.bg_fill = BG_PANEL;
-    v.widgets.noninteractive.fg_stroke = Stroke::new(1.0, TEXT_MUTED);
+    v.widgets.noninteractive.fg_stroke = Stroke::new(1.0_f32, TEXT_MUTED);
     v.widgets.inactive.bg_fill = BG_RAISED;
-    v.widgets.inactive.fg_stroke = Stroke::new(1.0, TEXT);
+    v.widgets.inactive.fg_stroke = Stroke::new(1.0_f32, TEXT);
     v.widgets.hovered.bg_fill = Color32::from_rgb(48, 58, 78);
-    v.widgets.hovered.fg_stroke = Stroke::new(1.0, ACCENT);
+    v.widgets.hovered.fg_stroke = Stroke::new(1.0_f32, ACCENT);
     v.widgets.active.bg_fill = ACCENT_DIM;
-    v.widgets.active.fg_stroke = Stroke::new(1.0, TEXT);
+    v.widgets.active.fg_stroke = Stroke::new(1.0_f32, TEXT);
     v.widgets.open.bg_fill = BG_SELECTED;
-    v.window_stroke = Stroke::new(1.0, BORDER);
-    v.widgets.noninteractive.bg_stroke = Stroke::new(1.0, BORDER);
-    v.widgets.inactive.bg_stroke = Stroke::new(1.0, BORDER);
+    v.window_stroke = Stroke::new(1.0_f32, BORDER);
+    v.widgets.noninteractive.bg_stroke = Stroke::new(1.0_f32, BORDER);
+    v.widgets.inactive.bg_stroke = Stroke::new(1.0_f32, BORDER);
     v
 }
 
 pub fn panel_frame() -> egui::Frame {
     egui::Frame::new()
         .fill(BG_PANEL)
-        .stroke(Stroke::new(1.0, BORDER))
+        .stroke(Stroke::new(1.0_f32, BORDER))
         .corner_radius(CornerRadius::same(8))
         .inner_margin(egui::Margin::same(10))
 }

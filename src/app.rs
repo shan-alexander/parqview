@@ -119,7 +119,7 @@ impl ParqApp {
         self.tree.selected = Some(path.clone());
 
         // Detect ethereal derives (currency / string-numeric).
-        self.derived = derive::detect_derived(&path).unwrap_or_default();
+        self.derived = describe::detect_derived_for(&path).unwrap_or_default();
         self.sql = derive::select_star_with_derived(&path, &self.derived, self.preview_limit);
 
         match duck::count_file(&path) {
@@ -130,12 +130,17 @@ impl ParqApp {
             }
         }
 
-        // Schema of enhanced relation (includes derived col types when present).
-        let schema_sql = format!(
-            "SELECT column_name, column_type FROM (DESCRIBE SELECT * FROM {})",
-            derive::enhanced_relation(&path, &self.derived)
-        );
-        match duck::query_json(&schema_sql) {
+        // Schema of relation (includes derived col types when present).
+        let schema_res = if self.derived.is_empty() {
+            duck::describe_file(&path)
+        } else {
+            let schema_sql = format!(
+                "SELECT column_name, column_type FROM (DESCRIBE SELECT * FROM {})",
+                derive::enhanced_relation(&path, &self.derived)
+            );
+            duck::query_json(&schema_sql)
+        };
+        match schema_res {
             Ok(s) => self.schema = Some(s),
             Err(e) => {
                 self.schema = None;
@@ -143,7 +148,12 @@ impl ParqApp {
             }
         }
 
-        match duck::query_json(&self.sql) {
+        let query_res = if self.derived.is_empty() {
+            duck::preview_file(&path, self.preview_limit)
+        } else {
+            duck::query_json(&self.sql)
+        };
+        match query_res {
             Ok(r) => {
                 let kind = if FolderTree::is_jsonl(&path) {
                     "jsonl"
@@ -247,7 +257,7 @@ impl eframe::App for ParqApp {
                 egui::Frame::new()
                     .fill(theme::BG_PANEL)
                     .inner_margin(egui::Margin::symmetric(12, 8))
-                    .stroke(egui::Stroke::new(1.0, theme::BORDER)),
+                    .stroke(egui::Stroke::new(1.0_f32, theme::BORDER)),
             )
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
@@ -280,7 +290,7 @@ impl eframe::App for ParqApp {
                 egui::Frame::new()
                     .fill(theme::BG_PANEL)
                     .inner_margin(egui::Margin::symmetric(12, 4))
-                    .stroke(egui::Stroke::new(1.0, theme::BORDER)),
+                    .stroke(egui::Stroke::new(1.0_f32, theme::BORDER)),
             )
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
@@ -336,11 +346,15 @@ impl eframe::App for ParqApp {
                     {
                         if let Some(p) = &self.open_path {
                             if FolderTree::is_tabular(p) {
-                                self.sql = derive::select_star_with_derived(
-                                    p,
-                                    &self.derived,
-                                    self.preview_limit,
-                                );
+                                self.sql = if self.derived.is_empty() {
+                                    duck::default_sql_for(p)
+                                } else {
+                                    derive::select_star_with_derived(
+                                        p,
+                                        &self.derived,
+                                        self.preview_limit,
+                                    )
+                                };
                             }
                         }
                     }
@@ -371,12 +385,7 @@ impl eframe::App for ParqApp {
             .resizable(true)
             .default_width(280.0)
             .min_width(180.0)
-            .frame(
-                egui::Frame::new()
-                    .fill(theme::BG_PANEL)
-                    .inner_margin(egui::Margin::same(10))
-                    .stroke(egui::Stroke::new(1.0, theme::BORDER)),
-            )
+            .frame(theme::panel_frame())
             .show(ctx, |ui| {
                 theme::section_label(ui, "Files");
                 ui.label(
@@ -411,12 +420,7 @@ impl eframe::App for ParqApp {
                 .resizable(true)
                 .default_width(240.0)
                 .min_width(160.0)
-                .frame(
-                    egui::Frame::new()
-                        .fill(theme::BG_PANEL)
-                        .inner_margin(egui::Margin::same(10))
-                        .stroke(egui::Stroke::new(1.0, theme::BORDER)),
-                )
+                .frame(theme::panel_frame())
                 .show(ctx, |ui| {
                     theme::section_label(ui, "Schema");
                     if let Some(path) = &self.open_path {
@@ -448,21 +452,44 @@ impl eframe::App for ParqApp {
                             if let Some(schema) = &self.schema {
                                 for row in &schema.rows {
                                     if row.len() >= 2 {
+                                        let col_name = &row[0];
+                                        let col_type = &row[1];
+                                        let derived_col = self.derived.iter().find(|d| d.name == *col_name);
+
                                         ui.horizontal(|ui| {
-                                            ui.label(
-                                                egui::RichText::new(&row[0])
+                                            let lbl = ui.label(
+                                                egui::RichText::new(col_name)
                                                     .strong()
                                                     .color(theme::TEXT),
                                             );
+                                            if let Some(d) = derived_col {
+                                                let num_badge = if d.is_numeric() { " [num]" } else { "" };
+                                                lbl.on_hover_text(format!(
+                                                    "{}{}\nType: {}\nNote: {}",
+                                                    d.name,
+                                                    num_badge,
+                                                    d.data_type_label(),
+                                                    d.note
+                                                ));
+                                            }
+
                                             ui.with_layout(
                                                 egui::Layout::right_to_left(egui::Align::Center),
                                                 |ui| {
-                                                    ui.label(
-                                                        egui::RichText::new(&row[1])
-                                                            .small()
-                                                            .monospace()
-                                                            .color(theme::ACCENT_DIM),
-                                                    );
+                                                    let type_str = if let Some(d) = derived_col {
+                                                        d.data_type_label()
+                                                    } else {
+                                                        col_type.as_str()
+                                                    };
+                                                    let type_text = egui::RichText::new(type_str)
+                                                        .small()
+                                                        .monospace()
+                                                        .color(if derived_col.is_some() {
+                                                            theme::ACCENT
+                                                        } else {
+                                                            theme::ACCENT_DIM
+                                                        });
+                                                    ui.label(type_text);
                                                 },
                                             );
                                         });
@@ -487,15 +514,17 @@ impl eframe::App for ParqApp {
                 ui.horizontal(|ui| {
                     theme::section_label(ui, "Results");
                     if let Some(r) = &self.result {
+                        let hint_str = if let Some(hint) = r.row_count_hint {
+                            format!("{} × {} (of ~{})", r.columns.len(), r.rows.len(), hint)
+                        } else {
+                            format!("{} × {}", r.columns.len(), r.rows.len())
+                        };
                         ui.label(
-                            egui::RichText::new(format!(
-                                "{} × {}",
-                                r.columns.len(),
-                                r.rows.len()
-                            ))
-                            .small()
-                            .color(theme::TEXT_MUTED),
-                        );
+                            egui::RichText::new(hint_str)
+                                .small()
+                                .color(theme::TEXT_MUTED),
+                        )
+                        .on_hover_text(format!("Executed SQL:\n{}", r.sql));
                     }
                     if ui
                         .small_button("Refresh")
