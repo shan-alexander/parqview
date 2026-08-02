@@ -1,0 +1,6 @@
+/target/
+**/*.rs.bk
+.DS_Store
+
+# rustbrain local index
+.brain/
