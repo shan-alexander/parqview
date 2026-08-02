@@ -24,21 +24,26 @@ fn is_wayland_available() -> bool {
     }
     #[cfg(target_os = "linux")]
     unsafe {
-        if let Ok(name1) = std::ffi::CString::new("libwayland-client.so.0") {
-            let handle1 = libc::dlopen(name1.as_ptr(), libc::RTLD_LAZY);
-            if !handle1.is_null() {
-                libc::dlclose(handle1);
-                return true;
+        // winit's Wayland backend requires libwayland-client, libxkbcommon, and libwayland-egl / libEGL.
+        // If any of these are missing from LD_LIBRARY_PATH (e.g. NixOS outside nix develop), winit fails with NoWaylandLib.
+        let required_libs = [
+            "libwayland-client.so.0",
+            "libxkbcommon.so.0",
+            "libwayland-egl.so.1",
+            "libEGL.so.1",
+        ];
+        for lib in required_libs {
+            if let Ok(cname) = std::ffi::CString::new(lib) {
+                let handle = libc::dlopen(cname.as_ptr(), libc::RTLD_LAZY);
+                if handle.is_null() {
+                    return false;
+                }
+                libc::dlclose(handle);
+            } else {
+                return false;
             }
         }
-        if let Ok(name2) = std::ffi::CString::new("libwayland-client.so") {
-            let handle2 = libc::dlopen(name2.as_ptr(), libc::RTLD_LAZY);
-            if !handle2.is_null() {
-                libc::dlclose(handle2);
-                return true;
-            }
-        }
-        false
+        true
     }
     #[cfg(not(target_os = "linux"))]
     true
