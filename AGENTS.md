@@ -7,11 +7,11 @@ Instructions and guidelines for AI agents working in this repository.
 ### Recommended: Cargo Install
 
 ```bash
-# Install binary globally from git:
-cargo install --git https://github.com/shan-alexander/parqview
+# Install binary globally from git (use --force to pull latest commit):
+cargo install --force --git https://github.com/shan-alexander/parqview
 
 # Or install from local clone:
-cargo install --path .
+cargo install --force --path .
 ```
 
 ### Ensuring `~/.cargo/bin` is in PATH

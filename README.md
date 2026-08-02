@@ -34,11 +34,11 @@ Inspired by [Duckling](https://github.com/l1xnan/duckling) (browse data + SQL), 
 Install directly via `cargo`:
 
 ```bash
-# Install directly from GitHub:
-cargo install --git https://github.com/shan-alexander/parqview
+# Install directly from GitHub (use --force to ensure latest commit is compiled):
+cargo install --force --git https://github.com/shan-alexander/parqview
 
 # Or from crates.io (once published):
-cargo install parqview
+cargo install --force parqview
 ```
 
 ### Adding `~/.cargo/bin` to PATH
