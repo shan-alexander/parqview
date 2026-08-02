@@ -27,18 +27,31 @@ Inspired by [Duckling](https://github.com/l1xnan/duckling) (browse data + SQL), 
 - `duckdb` on `PATH`
 - Wayland or X11 display
 
-## Build & run
+## Installation
 
 ```bash
-# Recommended launcher script (handles Nix environment & display settings):
+# Install directly via cargo:
+cargo install --git https://github.com/shan-alexander/parqview
+
+# Or from crates.io (once published):
+cargo install parqview
+```
+
+## Usage
+
+```bash
+# Run in terminal to open current working directory:
+parqview
+
+# Target a specific dataset or folder:
+parqview path/to/dataset.parquet
+parqview path/to/data_folder/
+
+# Local launcher script (handles Nix environment & display settings):
 ./run.sh [path/to/data_dir_or_file]
 
-# Or build manually:
-cargo build --release
-./target/release/parqview [path/to/data_dir_or_file]
-
-# X11 fallback if needed:
-PARQVIEW_X11=1 ./run.sh
+# Force X11 backend if needed:
+PARQVIEW_X11=1 parqview
 ```
 
 ## Architecture

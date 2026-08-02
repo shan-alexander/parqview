@@ -74,17 +74,11 @@ impl ParqApp {
                 }
             }
         } else {
-            for candidate in [
-                PathBuf::from("/home/kinna/labs/scala-score-scraper"),
-                PathBuf::from("/home/kinna/labs"),
-                std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
-            ] {
-                if candidate.is_dir() {
-                    app.tree.set_root(candidate.clone());
-                    if let Some(first) = find_first_tabular(&candidate, 0) {
-                        app.open_data_file(first);
-                    }
-                    break;
+            let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+            if cwd.is_dir() {
+                app.tree.set_root(cwd.clone());
+                if let Some(first) = find_first_tabular(&cwd, 0) {
+                    app.open_data_file(first);
                 }
             }
         }

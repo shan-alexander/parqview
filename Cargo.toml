@@ -2,8 +2,12 @@
 name = "parqview"
 version = "0.1.0"
 edition = "2021"
-description = "Lightweight egui + DuckDB parquet explorer (Duckling-inspired, no Tauri/WebView)"
+description = "Lightweight egui + DuckDB parquet explorer for local data files and directories"
 license = "MIT"
+repository = "https://github.com/shan-alexander/parqview"
+readme = "README.md"
+keywords = ["parquet", "csv", "duckdb", "egui", "data-viewer"]
+categories = ["command-line-utilities", "visualization"]
 
 [[bin]]
 name = "parqview"
