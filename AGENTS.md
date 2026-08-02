@@ -2,23 +2,67 @@
 
 Instructions and guidelines for AI agents working in this repository.
 
+## Installation & Cargo Binary Setup
+
+### Recommended: Cargo Install
+
+```bash
+# Install binary globally from git:
+cargo install --git https://github.com/shan-alexander/parqview
+
+# Or install from local clone:
+cargo install --path .
+```
+
+### Ensuring `~/.cargo/bin` is in PATH
+
+If the `parqview` binary is not found in your terminal after installation:
+
+```bash
+# Temporary (current session):
+export PATH="$HOME/.cargo/bin:$PATH"
+
+# Permanent fix (bash):
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
+
+# Permanent fix (zsh):
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+```
+
 ## Running & Testing the Application
 
-> **CRITICAL**: Always use `./run.sh` to launch or test `parqview`.
+### CLI Invocation
+
+`parqview` accepts positional path arguments:
+```bash
+# Open current working directory in parqview:
+parqview
+
+# Open a target directory tree (e.g., datalake root):
+parqview /mnt/datalake/
+
+# Open a specific file directly:
+parqview path/to/dataset.parquet
+```
+
+### Development Launcher (`./run.sh`)
+
+> **CRITICAL**: Use `./run.sh` to launch or test `parqview` during development if `parqview` is not yet installed in your `PATH`.
 
 `./run.sh` automatically manages:
 1. Nix development shell environment resolution (if `nix` and `flake.nix` are present).
 2. Proper Wayland display backend flags (and handles `PARQVIEW_X11=1` fallback if needed).
 3. Building the release binary (`cargo build --release`) if it does not yet exist.
 
-### Usage Examples
+Note: `parqview` requires `duckdb` installed on `PATH`.
+
 ```bash
-# Launch default viewer
+# Launch default viewer via run.sh
 ./run.sh
 
-# Launch viewer targeting a specific file or folder
+# Launch viewer targeting a specific directory or file
+./run.sh /mnt/datalake/
 ./run.sh path/to/dataset.parquet
-./run.sh path/to/data_folder/
 
 # Force X11 backend if Wayland rendering issue occurs
 PARQVIEW_X11=1 ./run.sh

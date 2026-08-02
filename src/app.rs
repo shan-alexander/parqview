@@ -56,6 +56,7 @@ impl ParqApp {
         app.theme_applied = true;
 
         if let Some(p) = initial {
+            let p = p.canonicalize().unwrap_or(p);
             if p.is_dir() {
                 app.tree.set_root(p.clone());
                 if let Some(first) = find_first_tabular(&p, 0) {
