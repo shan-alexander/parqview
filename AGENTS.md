@@ -19,8 +19,14 @@ cargo install --path .
 If the `parqview` binary is not found in your terminal after installation:
 
 ```bash
-# Temporary (current session):
+# Temporary (bash/zsh):
 export PATH="$HOME/.cargo/bin:$PATH"
+
+# Temporary (fish shell):
+set -gx PATH $HOME/.cargo/bin $PATH
+
+# Permanent fix (fish shell):
+fish_add_path ~/.cargo/bin
 
 # Permanent fix (bash):
 echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc

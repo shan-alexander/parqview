@@ -46,16 +46,20 @@ cargo install parqview
 If `parqview` is not recognized after installation, ensure `~/.cargo/bin` is in your `PATH`:
 
 ```bash
-# Temporary (current terminal session only):
+# Temporary (bash/zsh):
 export PATH="$HOME/.cargo/bin:$PATH"
 
+# Temporary (fish shell):
+set -gx PATH $HOME/.cargo/bin $PATH
+
+# Permanent fix (fish shell):
+fish_add_path ~/.cargo/bin
+
 # Permanent fix (bash):
-echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 
 # Permanent fix (zsh):
-echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
 ```
 
 ## Usage

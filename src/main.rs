@@ -21,8 +21,11 @@ use eframe::egui;
 fn main() -> eframe::Result<()> {
     let initial = std::env::args().nth(1).map(PathBuf::from);
 
-    // Wayland-first: do not set WINIT_UNIX_BACKEND=x11.
-    // OpenGL (glow) is more portable than wgpu on NixOS GPU stacks.
+    // If WINIT_UNIX_BACKEND is not set and WAYLAND_DISPLAY is missing, default to X11.
+    if std::env::var("WINIT_UNIX_BACKEND").is_err() && std::env::var("WAYLAND_DISPLAY").is_err() {
+        std::env::set_var("WINIT_UNIX_BACKEND", "x11");
+    }
+
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1440.0, 900.0])
@@ -33,9 +36,24 @@ fn main() -> eframe::Result<()> {
         ..Default::default()
     };
 
-    eframe::run_native(
+    let initial_clone = initial.clone();
+    let res = eframe::run_native(
         "parqview",
-        options,
-        Box::new(move |cc| Ok(Box::new(app::ParqApp::new(cc, initial)))),
-    )
+        options.clone(),
+        Box::new(move |cc| Ok(Box::new(app::ParqApp::new(cc, initial_clone)))),
+    );
+
+    if let Err(ref e) = res {
+        if std::env::var("WINIT_UNIX_BACKEND").is_err() {
+            eprintln!("Wayland initialization failed ({e}). Falling back to X11 backend...");
+            std::env::set_var("WINIT_UNIX_BACKEND", "x11");
+            return eframe::run_native(
+                "parqview",
+                options,
+                Box::new(move |cc| Ok(Box::new(app::ParqApp::new(cc, initial)))),
+            );
+        }
+    }
+
+    res
 }
