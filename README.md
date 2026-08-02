@@ -21,11 +21,10 @@ Inspired by [Duckling](https://github.com/l1xnan/duckling) (browse data + SQL), 
 - **Wayland-first** (set `PARQVIEW_X11=1` only if you need X11 fallback)
 - Dark aesthetic polish (accent panels, floating scrollbars)
 
-## Requirements
+## Requirements & Platform Support
 
-- Rust toolchain (or `nix develop` via `flake.nix`)
-- `duckdb` on `PATH`
-- Wayland or X11 display
+- **Linux (NixOS / Ubuntu / Arch)**: Wayland or X11 display + `duckdb` CLI on `PATH`.
+- **macOS (Apple Silicon & Intel)**: Native Cocoa/Metal GUI + `duckdb` CLI on `PATH` (`brew install duckdb`).
 
 ## Installation
 
