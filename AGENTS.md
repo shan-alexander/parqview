@@ -57,7 +57,7 @@ parqview path/to/dataset.parquet
 
 `./run.sh` automatically manages:
 1. Nix development shell environment resolution (if `nix` and `flake.nix` are present).
-2. Proper Wayland display backend flags (and handles `PARQVIEW_X11=1` fallback if needed).
+2. Nix `LD_LIBRARY_PATH` for Wayland/X11/GL (via `nix develop`). The binary itself also re-execs with nix-ld lib paths when needed; set `PARQVIEW_X11=1` to force X11.
 3. Building the release binary (`cargo build --release`) if it does not yet exist.
 
 Note: `parqview` requires `duckdb` installed on `PATH`.

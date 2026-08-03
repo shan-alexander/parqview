@@ -23,7 +23,8 @@ Inspired by [Duckling](https://github.com/l1xnan/duckling) (browse data + SQL), 
 
 ## Requirements & Platform Support
 
-- **Linux (NixOS / Ubuntu / Arch)**: Wayland or X11 display + `duckdb` CLI on `PATH`.
+- **Linux (Ubuntu / Arch / Fedora)**: Wayland or X11 display libraries (`libwayland-client`, `libxkbcommon`, `libEGL` and/or `libX11`) + `duckdb` CLI on `PATH`.
+- **Linux (NixOS)**: Prefer the flake (`nix run` / `./run.sh`) so Wayland/X11/GL libs are on `LD_LIBRARY_PATH`. With `cargo install`, parqview re-execs using [nix-ld](https://github.com/Mic92/nix-ld) system libraries when present (`programs.nix-ld.enable`).
 - **macOS (Apple Silicon & Intel)**: Native Cocoa/Metal GUI + `duckdb` CLI on `PATH` (`brew install duckdb`).
 
 ## Installation
@@ -38,6 +39,15 @@ cargo install --force --git https://github.com/shan-alexander/parqview
 
 # Or from crates.io (once published):
 cargo install --force parqview
+```
+
+### NixOS (flake)
+
+```bash
+# From a clone of this repo:
+nix run . -- /path/to/data
+# or during development:
+./run.sh /path/to/data
 ```
 
 ### Adding `~/.cargo/bin` to PATH
