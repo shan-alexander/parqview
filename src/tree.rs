@@ -35,6 +35,32 @@ pub struct FolderTree {
     pub error: Option<String>,
 }
 
+pub fn path_breadcrumbs(path: &Path) -> Vec<(String, PathBuf)> {
+    let mut crumbs = Vec::new();
+    let mut current = PathBuf::new();
+
+    for component in path.components() {
+        match component {
+            std::path::Component::RootDir => {
+                current.push(std::path::MAIN_SEPARATOR.to_string());
+                crumbs.push(("/".to_string(), current.clone()));
+            }
+            std::path::Component::Prefix(prefix) => {
+                let s = prefix.as_os_str().to_string_lossy().to_string();
+                current.push(&s);
+                crumbs.push((s, current.clone()));
+            }
+            std::path::Component::Normal(name) => {
+                let s = name.to_string_lossy().to_string();
+                current.push(&s);
+                crumbs.push((s, current.clone()));
+            }
+            _ => {}
+        }
+    }
+    crumbs
+}
+
 impl FolderTree {
     pub fn set_root(&mut self, root: PathBuf) {
         self.root = Some(root.clone());
@@ -151,35 +177,75 @@ impl FolderTree {
             }
         };
 
+        let mut new_root = None;
+
         ui.horizontal(|ui| {
-            ui.label(
-                egui::RichText::new(root.file_name().and_then(|s| s.to_str()).unwrap_or("root"))
-                    .strong()
-                    .color(theme::ACCENT),
-            );
+            if let Some(parent) = root.parent() {
+                if ui
+                    .button("⬆ Up")
+                    .on_hover_text(format!("Navigate upstream to: {}", parent.display()))
+                    .clicked()
+                {
+                    new_root = Some(parent.to_path_buf());
+                }
+            }
             if ui
                 .small_button("↻")
-                .on_hover_text("Refresh tree")
+                .on_hover_text("Refresh folder tree")
                 .clicked()
             {
                 self.refresh();
             }
             if ui
-                .small_button("…")
-                .on_hover_text("Change folder")
+                .small_button("🏠 CWD")
+                .on_hover_text("Reset root to current working directory")
+                .clicked()
+            {
+                if let Ok(cwd) = std::env::current_dir() {
+                    new_root = Some(cwd);
+                }
+            }
+            if ui
+                .small_button("📁 Browse…")
+                .on_hover_text("Choose a folder via OS dialog")
                 .clicked()
             {
                 if let Some(p) = rfd::FileDialog::new().pick_folder() {
-                    self.set_root(p);
+                    new_root = Some(p);
                 }
             }
         });
-        ui.label(
-            egui::RichText::new(root.display().to_string())
-                .small()
-                .color(theme::TEXT_MUTED)
-                .monospace(),
-        );
+
+        ui.add_space(2.0);
+
+        let crumbs = path_breadcrumbs(&root);
+        ui.horizontal_wrapped(|ui| {
+            let last_idx = crumbs.len().saturating_sub(1);
+            for (idx, (label, target_path)) in crumbs.into_iter().enumerate() {
+                let is_last = idx == last_idx;
+                let text = if is_last {
+                    egui::RichText::new(&label).strong().color(theme::ACCENT)
+                } else {
+                    egui::RichText::new(&label).color(theme::TEXT_MUTED)
+                };
+                if ui
+                    .link(text)
+                    .on_hover_text(format!("Navigate upstream to {}", target_path.display()))
+                    .clicked()
+                {
+                    new_root = Some(target_path);
+                }
+                if !is_last && label != "/" {
+                    ui.label(egui::RichText::new("/").small().color(theme::TEXT_MUTED));
+                }
+            }
+        });
+
+        if let Some(nr) = new_root {
+            self.set_root(nr);
+            return None;
+        }
+
         ui.add_space(4.0);
         ui.separator();
 

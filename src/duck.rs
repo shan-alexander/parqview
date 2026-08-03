@@ -23,6 +23,23 @@ pub fn duckdb_bin() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("duckdb"))
 }
 
+pub fn check_duckdb_version() -> Result<String> {
+    let out = Command::new(duckdb_bin())
+        .arg("--version")
+        .output()
+        .with_context(|| {
+            format!(
+                "failed to spawn duckdb ({})",
+                duckdb_bin().display()
+            )
+        })?;
+    if !out.status.success() {
+        bail!("duckdb --version failed with status {}", out.status);
+    }
+    let ver = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    Ok(ver)
+}
+
 /// Run SQL; expect JSON array of objects (duckdb -json).
 pub fn query_json(sql: &str) -> Result<QueryResult> {
     let start = std::time::Instant::now();

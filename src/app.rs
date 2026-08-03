@@ -26,6 +26,7 @@ pub struct ParqApp {
     show_schema: bool,
     theme_applied: bool,
     clipboard_flash: Option<String>,
+    duckdb_version: Option<String>,
 }
 
 impl Default for ParqApp {
@@ -44,6 +45,7 @@ impl Default for ParqApp {
             show_schema: true,
             theme_applied: false,
             clipboard_flash: None,
+            duckdb_version: duck::check_duckdb_version().ok(),
         }
     }
 }
@@ -279,6 +281,21 @@ impl eframe::App for ParqApp {
                                 .prefix("limit ")
                                 .speed(5.0),
                         );
+                        if let Some(ver) = &self.duckdb_version {
+                            ui.label(
+                                egui::RichText::new(format!("🦆 {ver}"))
+                                    .small()
+                                    .color(theme::OK),
+                            )
+                            .on_hover_text("DuckDB CLI is available on PATH");
+                        } else {
+                            ui.label(
+                                egui::RichText::new("⚠️ DuckDB missing")
+                                    .small()
+                                    .color(theme::ERR),
+                            )
+                            .on_hover_text("DuckDB CLI not found on PATH!\nInstall DuckDB:\n• macOS: brew install duckdb\n• Windows: winget install DuckDB.DuckDB\n• Linux: nix-env -iA nixpkgs.duckdb / apt install duckdb");
+                        }
                     });
                 });
             });
